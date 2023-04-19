@@ -38,11 +38,15 @@
 
 #if defined(HAVE_SIGACTION) || defined(_WIN32)
 #include <signal.h>
+#define STACK_SIZE 8192 // linux kernel default stack size for x86
 #endif
 
 #ifdef HAVE_BACKTRACE
 #include <execinfo.h>
-#include <unistd.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h> // for _exit
 #endif
 
 #define BACKTRACE_BUFFER_SIZE 200
@@ -172,7 +176,7 @@ void installSignalHandler(void) {
 }
 
 #ifdef HAVE_SIGALTSTACK
-static TLS_VARIABLE char alt_stack_loc[SIGSTKSZ];
+static TLS_VARIABLE char alt_stack_loc[STACK_SIZE];
 #endif
 
 void setSignalStack(void) {
@@ -184,7 +188,7 @@ void setSignalStack(void) {
     stack_t alt_stack;
     memset(&alt_stack, 0, sizeof(alt_stack));
     alt_stack.ss_flags = 0;
-    alt_stack.ss_size = SIGSTKSZ;
+    alt_stack.ss_size = STACK_SIZE;
     alt_stack.ss_sp = alt_stack_loc;
     if (!sigaltstack(&alt_stack, nullptr)) {
         act.sa_flags |= SA_ONSTACK;

@@ -133,7 +133,7 @@ public:
             : lit(&lit_in), idx(idx_in) {}
 
         const ue2_literal *lit = nullptr;
-        size_t idx;
+        size_t idx = 0;
     };
 
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
@@ -211,17 +211,10 @@ public:
 
     size_t hash() const;
 
-    void set_pure() { pure = true; }
-    void unset_pure() { pure = false; }
-    bool get_pure() const { return pure; }
-
-    /* TODO: consider existing member functions possibly related with pure. */
-
 private:
     friend const_iterator;
     std::string s;
     boost::dynamic_bitset<> nocase;
-    bool pure = false; /**< born from cutting or not (pure literal). */
 };
 
 /// Return a reversed copy of this literal.

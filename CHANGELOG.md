@@ -2,6 +2,98 @@
 
 This is a list of notable changes to Hyperscan, in reverse chronological order.
 
+## [5.4.2] 2023-04-19
+- Roll back bugfix for github issue #350: Besides using scratch for
+  corresponding database, Hyperscan also allows user to use larger scratch
+  allocated for another database. Users can leverage this property to achieve
+  safe scratch usage in multi-database scenarios. Behaviors beyond these are
+  discouraged and results are undefined.
+- Fix hsdump issue due to invalid nfa type.
+
+## [5.4.1] 2023-02-20
+- The Intel Hyperscan team is pleased to provide a bug fix release to our open source library.
+  Intel also maintains an upgraded version available through your Intel sales representative.
+- Bugfix for issue #184: fix random char value of UTF-8.
+- Bugfix for issue #291: bypass logical combination flag in hs_expression_info().
+- Bugfix for issue #292: fix build error due to libc symbol parsing.
+- Bugfix for issue #302/304: add empty string check for pure literal API.
+- Bugfix for issue #303: fix unknown instruction error in pure literal API.
+- Bugfix for issue #303: avoid memory leak in stream close stage.
+- Bugfix for issue #305: fix assertion failure in DFA construction.
+- Bugfix for issue #317: fix aligned allocator segment faults.
+- Bugfix for issue #350: add quick validity check for scratch.
+- Bugfix for issue #359: fix glibc-2.34 stack size issue.
+- Bugfix for issue #360: fix SKIP flag issue in chimera.
+- Bugfix for issue #362: fix one cotec check corner issue in UTF-8 validation.
+- Fix other compile issues.
+
+## [5.4.0] 2020-12-31
+- Improvement on literal matcher "Fat Teddy" performance, including
+  support for Intel(R) AVX-512 Vector Byte Manipulation Instructions (Intel(R)
+  AVX-512 VBMI).
+- Introduce a new 32-state shuffle-based DFA engine ("Sheng32"). This improves
+  scanning performance by leveraging AVX-512 VBMI.
+- Introduce a new 64-state shuffle-based DFA engine ("Sheng64"). This improves
+  scanning performance by leveraging AVX-512 VBMI.
+- Introduce a new shuffle-based hybrid DFA engine ("McSheng64"). This improves
+  scanning performance by leveraging AVX-512 VBMI.
+- Improvement on exceptional state handling performance for LimEx NFA, including
+  support for AVX-512 VBMI.
+- Improvement on lookaround performance with new models, including support for
+  AVX-512.
+- Improvement on DFA state space efficiency.
+- Optimization on decision of NFA/DFA generation.
+- hsbench: add CSV dump support for hsbench.
+- Bugfix for cmake error on Icelake under release mode.
+- Bugfix in find_vertices_in_cycles() to avoid self-loop checking in SCC.
+- Bugfix for issue #270: fix return value handling in chimera.
+- Bugfix for issue #284: use correct free function in logical combination.
+- Add BUILD_EXAMPLES cmake option to enable example code compilation. (#260)
+- Some typo fixing. (#242, #259)
+
+## [5.3.0] 2020-05-15
+- Improvement on literal matcher "Teddy" performance, including support for
+  Intel(R) AVX-512 Vector Byte Manipulation Instructions (Intel(R) AVX-512
+  VBMI).
+- Improvement on single-byte/two-byte matching performance, including support
+  for Intel(R) Advanced Vector Extensions 512 (Intel(R) AVX-512).
+- hsbench: add hyphen support for -T option.
+- tools/fuzz: add test scripts for synthetic pattern generation.
+- Bugfix for acceleration path analysis in LimEx NFA.
+- Bugfix for duplicate matches for Small-write engine.
+- Bugfix for UTF8 checking problem for hscollider.
+- Bugfix for issue #205: avoid crash of `hs_compile_lit_multi()` with clang and
+  ASAN.
+- Bugfix for issue #211: fix error in `db_check_platform()` function.
+- Bugfix for issue #217: fix cmake parsing issue of CPU arch for non-English
+  locale.
+- Bugfix for issue #228: avoid undefined behavior when calling `close()` after
+  `fdopendir()` in `loadExpressions()`.
+- Bugfix for issue #239: fix hyperscan compile issue under gcc-10.
+- Add VLAN packets processing capability in pcap analysis script. (#214)
+- Avoid extra convert instruction for "Noodle". (#221)
+- Add Hyperscan version marcro in `hs.h`. (#222)
+
+## [5.2.1] 2019-10-13
+- Bugfix for issue #186: fix compile issue when `BUILD_SHARED_LIBS` is on in
+  release mode.
+- Disable redundant move check for older compiler versions.
+
+## [5.2.0] 2019-07-12
+- Literal API: add new API `hs_compile_lit()` and `hs_compile_lit_multi()` to
+  process pure literal rule sets. The 2 literal APIs treat each expression text
+  in a literal sense without recognizing any regular grammers.
+- Logical combination: add support for purely negative combinations, which
+  report match at EOD in case of no sub-expressions matched.
+- Windows porting: support shared library (DLL) on Windows with available tools
+  hscheck, hsbench and hsdump.
+- Bugfix for issue #148: fix uninitialized use of `scatter_unit_uX` due to
+  padding.
+- Bugfix for issue #155: fix numerical result out of range error.
+- Bugfix for issue #165: avoid corruption of pending combination report in
+  streaming mode.
+- Bugfix for issue #174: fix scratch free issue when memory allocation fails.
+
 ## [5.1.1] 2019-04-03
 - Add extra detection and handling when invalid rose programs are triggered.
 - Bugfix for issue #136: fix CMake parsing of CPU architecure for GCC-9.

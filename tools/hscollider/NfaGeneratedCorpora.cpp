@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018, Intel Corporation
+ * Copyright (c) 2015-2019, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -32,6 +32,7 @@
 #include "ng_corpus_generator.h"
 #include "NfaGeneratedCorpora.h"
 #include "ExpressionParser.h"
+#include "common.h"
 
 #include "grey.h"
 #include "hs_compile.h"
@@ -44,6 +45,7 @@
 #include "util/compile_context.h"
 #include "util/compile_error.h"
 #include "util/report_manager.h"
+#include "util/string_util.h"
 #include "util/target_info.h"
 
 #include <string>
@@ -80,6 +82,18 @@ void NfaGeneratedCorpora::generate(unsigned id, vector<Corpus> &data) {
         throw CorpusFailure("Expression could not be read: " + i->second);
     }
 
+    // When hyperscan literal api is on, transfer the regex string into hex.
+    if (use_literal_api && !(hs_flags & HS_FLAG_COMBINATION)) {
+        unsigned char *pat
+            = reinterpret_cast<unsigned char *>(const_cast<char *>(re.c_str()));
+        char *str = makeHex(pat, re.length());
+        if (!str) {
+            throw CorpusFailure("makeHex() malloc failure.");
+        }
+        re.assign(str);
+        free(str);
+    }
+
     // Combination's corpus is consist of sub-expressions' corpuses.
     if (hs_flags & HS_FLAG_COMBINATION) {
         ParsedLogical pl;
@@ -87,7 +101,7 @@ void NfaGeneratedCorpora::generate(unsigned id, vector<Corpus> &data) {
         pl.logicalKeyRenumber();
         const auto &m_lkey = pl.getLkeyMap();
         assert(!m_lkey.empty());
-        u32 a_subid; // arbitrary sub id
+        u32 a_subid = 0; // arbitrary sub id
         unordered_map<u32, vector<Corpus>> m_data;
         for (const auto &it : m_lkey) {
             a_subid = it.first;

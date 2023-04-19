@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Intel Corporation
+ * Copyright (c) 2018-2020, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -33,6 +33,7 @@
 #include "parser/parse_error.h"
 #include "util/container.h"
 #include "hs_compile.h"
+#include "allocator.h"
 
 #include <vector>
 
@@ -139,7 +140,8 @@ void ParsedLogical::validateSubIDs(const unsigned *ids,
         }
         hs_compile_error_t *compile_err = NULL;
         hs_expr_info_t *info = NULL;
-        hs_error_t err = hs_expression_info(expressions[i], flags[i], &info,
+        hs_error_t err = hs_expression_info(expressions[i],
+                                            flags ? flags[i] : 0, &info,
                                             &compile_err);
         if (err != HS_SUCCESS) {
             hs_free_compile_error(compile_err);
@@ -151,7 +153,7 @@ void ParsedLogical::validateSubIDs(const unsigned *ids,
             if (info->unordered_matches) {
                 throw CompileError("Have unordered match in sub-expressions.");
             }
-            free(info);
+            hs_misc_free(info);
         }
     }
 }
@@ -254,44 +256,6 @@ void popOperator(vector<LogicalOperator> &op_stack, vector<u32> &subid_stack,
     op_stack.pop_back();
 }
 
-static
-char getValue(const vector<char> &lv, u32 ckey) {
-    if (ckey & LOGICAL_OP_BIT) {
-        return lv[ckey & ~LOGICAL_OP_BIT];
-    } else {
-        return 0;
-    }
-}
-
-static
-bool hasMatchFromPurelyNegative(const vector<LogicalOp> &tree,
-                                u32 start, u32 result) {
-    vector<char> lv(tree.size());
-    assert(start <= result);
-    for (u32 i = start; i <= result; i++) {
-        assert(i & LOGICAL_OP_BIT);
-        const LogicalOp &op = tree[i & ~LOGICAL_OP_BIT];
-        assert(i == op.id);
-        switch (op.op) {
-        case LOGICAL_OP_NOT:
-            lv[op.id & ~LOGICAL_OP_BIT] = !getValue(lv, op.ro);
-            break;
-        case LOGICAL_OP_AND:
-            lv[op.id & ~LOGICAL_OP_BIT] = getValue(lv, op.lo) &
-                                          getValue(lv, op.ro);
-            break;
-        case LOGICAL_OP_OR:
-            lv[op.id & ~LOGICAL_OP_BIT] = getValue(lv, op.lo) |
-                                          getValue(lv, op.ro);
-            break;
-        default:
-            assert(0);
-            break;
-        }
-    }
-    return lv[result & ~LOGICAL_OP_BIT];
-}
-
 void ParsedLogical::parseLogicalCombination(unsigned id, const char *logical,
                                             u32 ekey, u64a min_offset,
                                             u64a max_offset) {
@@ -365,9 +329,6 @@ void ParsedLogical::parseLogicalCombination(unsigned id, const char *logical,
     u32 lkey_result = subid_stack.back(); // logical operation's lkey
     if (lkey_start == INVALID_LKEY) {
         throw CompileError("No logical operation.");
-    }
-    if (hasMatchFromPurelyNegative(logicalTree, lkey_start, lkey_result)) {
-        throw CompileError("Has match from purely negative sub-expressions.");
     }
     combinationInfoAdd(ckey, id, ekey, lkey_start, lkey_result,
                        min_offset, max_offset);
